@@ -9,50 +9,62 @@
 
 <style>
 
-body {
-    background:#111;
-    color:white;
-    font-family:Arial;
-    text-align:center;
+body{
+background:#111;
+color:white;
+font-family:Arial;
+text-align:center;
 }
 
+.card{
 
-.card {
-    background:#222;
-    padding:25px;
-    margin:50px auto;
-    border-radius:20px;
-    width:320px;
-}
-
-
-button, select, input {
-
-    width:90%;
-    padding:15px;
-    margin:10px;
-    border-radius:10px;
-    border:0;
-    font-size:18px;
+background:#222;
+padding:25px;
+margin:30px auto;
+border-radius:20px;
+width:330px;
 
 }
 
+button,input,select{
 
-.start {
-    background:#4caf50;
+width:90%;
+padding:12px;
+margin:8px;
+border-radius:10px;
+border:0;
+font-size:16px;
+
 }
 
 
-.stop {
-    background:#f44336;
-    color:white;
+.start{
+background:#4caf50;
 }
 
 
-#timer {
+.stop{
 
-    font-size:35px;
-    margin:20px;
+background:#f44336;
+color:white;
+
+}
+
+
+.site{
+
+background:#333;
+padding:10px;
+margin:5px;
+border-radius:10px;
+
+}
+
+
+#timer{
+
+font-size:35px;
+margin:20px;
 
 }
 
@@ -71,7 +83,7 @@ button, select, input {
 <div class="card">
 
 
-<h3>מצב פוקוס</h3>
+<h3>⏱️ פוקוס</h3>
 
 
 <div id="status">
@@ -100,18 +112,12 @@ button, select, input {
 </select>
 
 
-
-<p>
-או זמן מותאם אישית:
-</p>
-
-
-<input 
+<input
 id="customTime"
 type="number"
-placeholder="מספר דקות"
-min="1"
+placeholder="זמן מותאם בדקות"
 >
+
 
 
 <div id="timer">
@@ -119,20 +125,41 @@ min="1"
 </div>
 
 
-
 <button class="start" onclick="startFocus()">
-🟢 הפעל פוקוס
+🟢 הפעל
 </button>
 
 
 <button class="start" onclick="startCustomFocus()">
-⏱️ הפעל זמן מותאם
+⏱️ זמן מותאם
 </button>
 
 
 <button class="stop" onclick="stopFocus()">
-🔴 כבה פוקוס
+🔴 כבה
 </button>
+
+
+<hr>
+
+
+<h3>🚫 אתרים חסומים</h3>
+
+
+<input
+id="siteInput"
+placeholder="youtube.com"
+>
+
+
+<button onclick="addSite()">
+➕ הוסף אתר
+</button>
+
+
+<div id="sitesList">
+טוען...
+</div>
 
 
 
