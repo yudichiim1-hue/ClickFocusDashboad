@@ -2,7 +2,7 @@ import { initializeApp }
 from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 
-import { 
+import {
 getFirestore,
 doc,
 updateDoc,
@@ -16,28 +16,37 @@ const firebaseConfig = {
 
 apiKey: "AIzaSyBF87jtpyOS6exnNMH3PPc0XND8df2I7TU",
 
-authDomain: "clickfocusmaster.firebaseapp.com",
+authDomain:
+"clickfocusmaster.firebaseapp.com",
 
-projectId: "clickfocusmaster",
+projectId:
+"clickfocusmaster",
 
-storageBucket: "clickfocusmaster.firebasestorage.app",
+storageBucket:
+"clickfocusmaster.firebasestorage.app",
 
-messagingSenderId: "891874911950",
+messagingSenderId:
+"891874911950",
 
-appId: "1:891874911950:web:43ac8e66561f6a8e70d29f"
+appId:
+"1:891874911950:web:43ac8e66561f6a8e70d29f"
 
 };
 
 
 
-const app = initializeApp(firebaseConfig);
-
-
-const db = getFirestore(app);
+const app =
+initializeApp(firebaseConfig);
 
 
 
-const focusRef = doc(
+const db =
+getFirestore(app);
+
+
+
+const focusRef =
+doc(
 db,
 "focusSettings",
 "test-user"
@@ -45,9 +54,12 @@ db,
 
 
 
+
 // הפעלה רגילה
 
-window.startFocus = async function(){
+window.startFocus =
+async function(){
+
 
 await updateDoc(
 focusRef,
@@ -56,26 +68,40 @@ active:true
 }
 );
 
+
 loadStatus();
 
+
 };
+
 
 
 
 // כיבוי
 
-window.stopFocus = async function(){
+window.stopFocus =
+async function(){
+
 
 await updateDoc(
 focusRef,
 {
-active:false
+
+active:false,
+
+duration:0,
+
+endTime:0
+
 }
 );
 
+
 loadStatus();
 
+
 };
+
 
 
 
@@ -119,15 +145,6 @@ endTime:endTime
 
 
 
-alert(
-"🎯 פוקוס הופעל ל־"
-+
-minutes
-+
-" דקות"
-);
-
-
 loadStatus();
 
 
@@ -135,7 +152,8 @@ loadStatus();
 
 
 
-// הצגת מצב
+
+// טעינת מצב
 
 async function loadStatus(){
 
@@ -145,7 +163,9 @@ await getDoc(focusRef);
 
 
 
-if(snap.exists()){
+if(!snap.exists())
+return;
+
 
 
 const data =
@@ -153,20 +173,120 @@ snap.data();
 
 
 
-document
-.getElementById("status")
-.innerHTML =
-data.active
-?
-"🟢 פעיל"
-:
-"⚪ כבוי";
+const status =
+document.getElementById("status");
+
+
+const timer =
+document.getElementById("timer");
+
+
+
+if(data.active){
+
+
+status.innerHTML =
+"🟢 פוקוס פעיל";
+
+
+if(data.endTime){
+
+startCountdown(
+data.endTime
+);
+
+}
+
+
+
+}else{
+
+
+status.innerHTML =
+"⚪ פוקוס כבוי";
+
+
+timer.innerHTML="";
 
 
 }
 
 
+
 }
+
+
+
+
+// ספירה לאחור
+
+function startCountdown(endTime){
+
+
+const timer =
+document.getElementById("timer");
+
+
+
+const interval =
+setInterval(()=>{
+
+
+const diff =
+endTime - Date.now();
+
+
+
+if(diff <= 0){
+
+
+timer.innerHTML =
+"⏰ הסתיים";
+
+
+clearInterval(interval);
+
+
+return;
+
+
+}
+
+
+
+const minutes =
+Math.floor(
+diff / 60000
+);
+
+
+
+const seconds =
+Math.floor(
+(diff / 1000) % 60
+);
+
+
+
+timer.innerHTML =
+"⏱️ נשארו "
++
+minutes
++
+":"
++
+seconds
+.toString()
+.padStart(2,"0");
+
+
+
+},1000);
+
+
+
+}
+
 
 
 
