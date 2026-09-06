@@ -22,8 +22,8 @@ appId:"1:891874911950:web:43ac8e66561f6a8e70d29f"
 
 
 const app = initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
+
 
 const focusRef = doc(db,"users","test-user");
 
@@ -32,31 +32,42 @@ let timerInterval = null;
 
 
 
-function showTime(endTime){
+function startTimer(endTime){
+
 
 clearInterval(timerInterval);
 
 
-function update(){
+
+timerInterval = setInterval(async()=>{
+
 
 let diff = endTime - Date.now();
 
 
+
 if(diff <= 0){
+
+
+clearInterval(timerInterval);
+
 
 document.getElementById("timer").innerHTML="00:00";
 
 document.getElementById("status").innerHTML="נגמר";
 
 
-clearInterval(timerInterval);
 
+await setDoc(focusRef,{
 
-setDoc(focusRef,{
 active:false,
+
 remainingTime:0,
+
 endTime:0
+
 },{merge:true});
+
 
 
 return;
@@ -64,9 +75,17 @@ return;
 }
 
 
-let minutes = Math.floor(diff / 60000);
 
-let seconds = Math.floor((diff % 60000) / 1000);
+let secondsLeft = Math.floor(diff / 1000);
+
+
+let minutes =
+Math.floor(secondsLeft / 60);
+
+
+let seconds =
+secondsLeft % 60;
+
 
 
 document.getElementById("timer").innerHTML =
@@ -77,14 +96,23 @@ String(minutes).padStart(2,"0")
 String(seconds).padStart(2,"0");
 
 
+
+// עדכון הזמן שנשאר ב-Firebase
+
+await setDoc(focusRef,{
+
+remainingTime:secondsLeft
+
+},{merge:true});
+
+
+
+},1000);
+
+
+
 }
 
-
-update();
-
-timerInterval=setInterval(update,1000);
-
-}
 
 
 
@@ -96,8 +124,13 @@ let minutes =
 Number(document.getElementById("time").value);
 
 
-let endTime =
-Date.now() + minutes * 60000;
+
+let start =
+Date.now();
+
+
+let end =
+start + minutes * 60 * 1000;
 
 
 
@@ -107,24 +140,27 @@ active:true,
 
 duration:minutes,
 
-startedAt:Date.now(),
+startedAt:start,
 
-endTime:endTime,
+endTime:end,
 
 remainingTime:minutes*60
-
 
 },{merge:true});
 
 
 
-document.getElementById("status").innerHTML="פעיל 🟢";
+document.getElementById("status").innerHTML =
+"פעיל 🟢";
 
 
-showTime(endTime);
+
+startTimer(end);
+
 
 
 };
+
 
 
 
@@ -141,18 +177,25 @@ await setDoc(focusRef,{
 
 active:false,
 
-remainingTime:0,
+duration:0,
 
-endTime:0
+startedAt:0,
 
+endTime:0,
+
+remainingTime:0
 
 },{merge:true});
 
 
 
-document.getElementById("status").innerHTML="כבוי";
+document.getElementById("status").innerHTML =
+"כבוי";
 
-document.getElementById("timer").innerHTML="00:00";
+
+document.getElementById("timer").innerHTML =
+"00:00";
+
 
 
 };
@@ -162,7 +205,8 @@ document.getElementById("timer").innerHTML="00:00";
 
 
 
-// סנכרון חי עם Firebase
+
+// סנכרון חי
 
 onSnapshot(focusRef,(snap)=>{
 
@@ -170,17 +214,20 @@ onSnapshot(focusRef,(snap)=>{
 if(!snap.exists()) return;
 
 
-let data=snap.data();
+
+let data = snap.data();
 
 
 
-if(data.active && data.endTime){
+if(data.active && data.endTime > Date.now()){
 
 
-document.getElementById("status").innerHTML="פעיל 🟢";
+document.getElementById("status").innerHTML =
+"פעיל 🟢";
 
 
-showTime(data.endTime);
+startTimer(data.endTime);
+
 
 
 }
@@ -188,12 +235,12 @@ showTime(data.endTime);
 else{
 
 
-document.getElementById("status").innerHTML="כבוי";
-
-document.getElementById("timer").innerHTML="00:00";
+document.getElementById("status").innerHTML =
+"כבוי";
 
 
 }
+
 
 
 });
