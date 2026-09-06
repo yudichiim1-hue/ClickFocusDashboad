@@ -1,19 +1,26 @@
-import { initializeApp } from 
+import { initializeApp } from
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 
 import {
+
 getFirestore,
 doc,
 setDoc,
-onSnapshot
+onSnapshot,
+collection,
+addDoc,
+getDocs,
+deleteDoc
+
 }
 from
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
 
-const firebaseConfig = {
+const firebaseConfig={
+
 
 apiKey:"AIzaSyBF87jtpyOS6exnNMH3PPc0XND8df2I7TU",
 
@@ -31,20 +38,23 @@ appId:"1:891874911950:web:43ac8e66561f6a8e70d29f"
 
 
 
-const app =
-initializeApp(firebaseConfig);
+const app=initializeApp(firebaseConfig);
+
+const db=getFirestore(app);
 
 
-const db =
-getFirestore(app);
 
-
-const focusRef =
+const focusRef=
 doc(db,"users","test-user");
 
 
 
-let timerInterval = null;
+const sitesRef=
+collection(db,"blockedSites");
+
+
+
+let timerInterval=null;
 
 
 
@@ -55,38 +65,27 @@ function startTimer(endTime){
 clearInterval(timerInterval);
 
 
-
 function update(){
 
 
-const diff =
-endTime - Date.now();
+let diff=endTime-Date.now();
 
 
-
-if(diff <= 0){
+if(diff<=0){
 
 
 clearInterval(timerInterval);
 
 
+document.getElementById("timer").innerHTML="00:00";
 
-document.getElementById("timer").innerHTML =
-"00:00";
-
-
-document.getElementById("status").innerHTML =
-"נגמר";
+document.getElementById("status").innerHTML="נגמר";
 
 
 setDoc(focusRef,{
-
 active:false
-
 },{
-
 merge:true
-
 });
 
 
@@ -96,27 +95,26 @@ return;
 
 
 
-const totalSeconds =
-Math.floor(diff / 1000);
+let total=
+Math.floor(diff/1000);
+
+
+let min=
+Math.floor(total/60);
+
+
+let sec=
+total%60;
 
 
 
-const minutes =
-Math.floor(totalSeconds / 60);
+document.getElementById("timer").innerHTML=
 
-
-const seconds =
-totalSeconds % 60;
-
-
-
-document.getElementById("timer").innerHTML =
-
-String(minutes).padStart(2,"0")
+String(min).padStart(2,"0")
 +
 ":"
 +
-String(seconds).padStart(2,"0");
+String(sec).padStart(2,"0");
 
 
 }
@@ -126,8 +124,7 @@ String(seconds).padStart(2,"0");
 update();
 
 
-timerInterval =
-setInterval(update,1000);
+timerInterval=setInterval(update,1000);
 
 
 }
@@ -135,15 +132,13 @@ setInterval(update,1000);
 
 
 
-async function activateFocus(minutes){
+
+async function activate(minutes){
 
 
-const start =
-Date.now();
+let start=Date.now();
 
-
-const end =
-start + minutes * 60 * 1000;
+let end=start+minutes*60000;
 
 
 
@@ -157,18 +152,15 @@ startedAt:start,
 
 endTime:end
 
+},{merge:true});
 
-},{
-merge:true
-});
-
-
-
-document.getElementById("status").innerHTML =
-"פעיל 🟢";
 
 
 startTimer(end);
+
+
+document.getElementById("status").innerHTML=
+"פעיל 🟢";
 
 
 }
@@ -176,45 +168,34 @@ startTimer(end);
 
 
 
-window.startFocus = ()=>{
+window.startFocus=()=>{
 
 
-const minutes =
+activate(
 Number(
 document.getElementById("time").value
+)
 );
-
-
-activateFocus(minutes);
 
 
 };
 
 
 
+window.startCustomFocus=()=>{
 
 
-window.startCustomFocus = ()=>{
-
-
-const minutes =
+let minutes=
 Number(
 document.getElementById("customTime").value
 );
 
 
 
-if(!minutes || minutes <= 0){
-
-alert("הכנס מספר דקות תקין");
-
-return;
-
-}
+if(!minutes)return;
 
 
-
-activateFocus(minutes);
+activate(minutes);
 
 
 };
@@ -222,9 +203,7 @@ activateFocus(minutes);
 
 
 
-
-
-window.stopFocus = async ()=>{
+window.stopFocus=async()=>{
 
 
 clearInterval(timerInterval);
@@ -241,20 +220,13 @@ startedAt:0,
 
 endTime:0
 
-},{
-
-merge:true
-
-});
+},{merge:true});
 
 
 
-document.getElementById("status").innerHTML =
-"כבוי";
+document.getElementById("status").innerHTML="כבוי";
 
-
-document.getElementById("timer").innerHTML =
-"00:00";
+document.getElementById("timer").innerHTML="00:00";
 
 
 };
@@ -264,27 +236,20 @@ document.getElementById("timer").innerHTML =
 
 
 
-
 onSnapshot(focusRef,(snap)=>{
 
 
-if(!snap.exists())
-return;
+if(!snap.exists())return;
+
+
+let data=snap.data();
 
 
 
-const data =
-snap.data();
+if(data.active && data.endTime>Date.now()){
 
 
-
-if(
-data.active &&
-data.endTime > Date.now()
-){
-
-
-document.getElementById("status").innerHTML =
+document.getElementById("status").innerHTML=
 "פעיל 🟢";
 
 
@@ -293,14 +258,111 @@ startTimer(data.endTime);
 
 }
 
-else{
 
 
-document.getElementById("status").innerHTML =
-"כבוי";
+});
+
+
+
+
+
+
+// =================
+// אתרים חסומים
+// =================
+
+
+
+window.addSite=async()=>{
+
+
+let site=
+document.getElementById("siteInput").value.trim();
+
+
+
+if(!site)return;
+
+
+
+await addDoc(sitesRef,{
+
+url:site
+
+});
+
+
+
+document.getElementById("siteInput").value="";
+
+
+loadSites();
+
+
+};
+
+
+
+
+
+async function loadSites(){
+
+
+let box=
+document.getElementById("sitesList");
+
+
+box.innerHTML="";
+
+
+let snap=
+await getDocs(sitesRef);
+
+
+
+snap.forEach(item=>{
+
+
+let data=item.data();
+
+
+
+box.innerHTML+=`
+
+<div class="site">
+
+${data.url}
+
+<button onclick="removeSite('${item.id}')">
+❌
+</button>
+
+
+</div>
+
+`;
+
+
+});
 
 
 }
 
 
-});
+
+window.removeSite=async(id)=>{
+
+
+await deleteDoc(
+doc(db,"blockedSites",id)
+);
+
+
+loadSites();
+
+
+};
+
+
+
+loadSites();
