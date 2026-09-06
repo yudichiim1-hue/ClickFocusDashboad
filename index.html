@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>ClickFocus</title>
 
 <style>
@@ -17,7 +15,7 @@ body {
 
 .card {
     background:#222;
-    padding:30px;
+    padding:25px;
     margin:50px auto;
     border-radius:20px;
     width:300px;
@@ -29,108 +27,57 @@ button, select {
     margin:10px;
     border-radius:10px;
     border:0;
-    font-size:16px;
+    font-size:18px;
 }
 
-button {
-    cursor:pointer;
+.start {
+    background:#4caf50;
 }
 
-#status {
-    font-size:22px;
+.stop {
+    background:#f44336;
+    color:white;
 }
 
 #timer {
-    font-size:20px;
-    color:#00ff88;
+    font-size:35px;
+    margin:20px;
 }
 </style>
-
 </head>
-
 
 <body>
 
-
-<h1>🎯 ClickFocus</h1>
-
+<h2>🎯 ClickFocus</h2>
 
 <div class="card">
 
+<h3>מצב פוקוס</h3>
 
-<h2>מצב פוקוס</h2>
+<div id="status">כבוי</div>
 
+<select id="time">
+<option value="30">30 דקות</option>
+<option value="60">שעה</option>
+<option value="120">שעתיים</option>
+</select>
 
-<p id="status">
-טוען...
-</p>
+<div id="timer">
+00:00
+</div>
 
-
-<p id="timer"></p>
-
-
-
-<button onclick="startFocus()">
+<button class="start" onclick="startFocus()">
 🟢 הפעל פוקוס
 </button>
 
-
-
-<button onclick="stopFocus()">
+<button class="stop" onclick="stopFocus()">
 🔴 כבה פוקוס
 </button>
-
-
-
-<hr>
-
-
-
-<h3>
-⏱️ זמן פוקוס
-</h3>
-
-
-
-<select id="focusTime">
-
-<option value="30">
-30 דקות
-</option>
-
-
-<option value="60" selected>
-שעה
-</option>
-
-
-<option value="120">
-שעתיים
-</option>
-
-
-<option value="180">
-3 שעות
-</option>
-
-
-</select>
-
-
-
-<button id="startTimer">
-🚀 הפעל לזמן נבחר
-</button>
-
-
 
 </div>
 
 
-
 <script type="module" src="app.js"></script>
 
-
 </body>
-
 </html>
