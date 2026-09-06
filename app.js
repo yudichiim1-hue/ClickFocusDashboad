@@ -35,13 +35,10 @@ appId:
 
 
 
-const app =
-initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
 
-
-const db =
-getFirestore(app);
+const db = getFirestore(app);
 
 
 
@@ -54,11 +51,14 @@ db,
 
 
 
+let countdownInterval = null;
+
+
+
 
 // הפעלה רגילה
 
-window.startFocus =
-async function(){
+window.startFocus = async function(){
 
 
 await updateDoc(
@@ -69,7 +69,8 @@ active:true
 );
 
 
-loadStatus();
+document.getElementById("status").innerHTML =
+"🟢 פוקוס פעיל";
 
 
 };
@@ -77,10 +78,10 @@ loadStatus();
 
 
 
+
 // כיבוי
 
-window.stopFocus =
-async function(){
+window.stopFocus = async function(){
 
 
 await updateDoc(
@@ -91,16 +92,33 @@ active:false,
 
 duration:0,
 
-endTime:0
+endTime:0,
+
+startedAt:0
 
 }
 );
 
 
-loadStatus();
+
+if(countdownInterval){
+
+clearInterval(countdownInterval);
+
+}
+
+
+
+document.getElementById("status").innerHTML =
+"⚪ פוקוס כבוי";
+
+
+document.getElementById("timer").innerHTML =
+"";
 
 
 };
+
 
 
 
@@ -145,7 +163,11 @@ endTime:endTime
 
 
 
-loadStatus();
+document.getElementById("status").innerHTML =
+"🟢 פוקוס פעיל";
+
+
+startCountdown(endTime);
 
 
 });
@@ -153,7 +175,10 @@ loadStatus();
 
 
 
-// טעינת מצב
+
+
+
+// טעינת מצב מהשרת
 
 async function loadStatus(){
 
@@ -173,27 +198,17 @@ snap.data();
 
 
 
-const status =
-document.getElementById("status");
-
-
-const timer =
-document.getElementById("timer");
-
-
-
 if(data.active){
 
 
-status.innerHTML =
+document.getElementById("status").innerHTML =
 "🟢 פוקוס פעיל";
+
 
 
 if(data.endTime){
 
-startCountdown(
-data.endTime
-);
+startCountdown(data.endTime);
 
 }
 
@@ -202,33 +217,40 @@ data.endTime
 }else{
 
 
-status.innerHTML =
+document.getElementById("status").innerHTML =
 "⚪ פוקוס כבוי";
 
 
-timer.innerHTML="";
+document.getElementById("timer").innerHTML =
+"";
+
+
+}
 
 
 }
 
 
 
-}
 
 
 
 
-// ספירה לאחור
+// טיימר
 
 function startCountdown(endTime){
 
 
-const timer =
-document.getElementById("timer");
+
+if(countdownInterval){
+
+clearInterval(countdownInterval);
+
+}
 
 
 
-const interval =
+countdownInterval =
 setInterval(()=>{
 
 
@@ -240,17 +262,18 @@ endTime - Date.now();
 if(diff <= 0){
 
 
-timer.innerHTML =
+document.getElementById("timer").innerHTML =
 "⏰ הסתיים";
 
 
-clearInterval(interval);
+clearInterval(countdownInterval);
+
 
 
 return;
 
-
 }
+
 
 
 
@@ -268,7 +291,8 @@ Math.floor(
 
 
 
-timer.innerHTML =
+document.getElementById("timer").innerHTML =
+
 "⏱️ נשארו "
 +
 minutes
@@ -286,6 +310,7 @@ seconds
 
 
 }
+
 
 
 
