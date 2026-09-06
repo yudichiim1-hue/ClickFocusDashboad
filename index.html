@@ -1,174 +1,84 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>ClickFocus</title>
 
 <style>
-
-body{
-background:#111;
-color:white;
-font-family:Arial;
-text-align:center;
+body {
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
 }
 
-.card{
-
-background:#222;
-padding:25px;
-margin:30px auto;
-border-radius:20px;
-width:330px;
-
+.card {
+    background:#222;
+    padding:25px;
+    margin:50px auto;
+    border-radius:20px;
+    width:300px;
 }
 
-button,input,select{
-
-width:90%;
-padding:12px;
-margin:8px;
-border-radius:10px;
-border:0;
-font-size:16px;
-
+button, select {
+    width:90%;
+    padding:15px;
+    margin:10px;
+    border-radius:10px;
+    border:0;
+    font-size:18px;
+    cursor: pointer;
 }
 
+.start { background:#4caf50; color:white; }
+.stop { background:#f44336; color:white; }
+.login { background:#4285F4; color:white; }
+.logout { background:#555; color:white; margin-top: 20px; }
 
-.start{
-background:#4caf50;
+#timer {
+    font-size:35px;
+    margin:20px;
 }
 
-
-.stop{
-
-background:#f44336;
-color:white;
-
-}
-
-
-.site{
-
-background:#333;
-padding:10px;
-margin:5px;
-border-radius:10px;
-
-}
-
-
-#timer{
-
-font-size:35px;
-margin:20px;
-
-}
-
-
+/* הסתרת אלמנטים כברירת מחדל */
+#app-section { display: none; }
 </style>
-
 </head>
-
 
 <body>
 
-
 <h2>🎯 ClickFocus</h2>
 
-
-<div class="card">
-
-
-<h3>⏱️ פוקוס</h3>
-
-
-<div id="status">
-כבוי
+<!-- אזור התחברות -->
+<div id="login-section" class="card">
+    <h3>ברוך הבא!</h3>
+    <p>התחבר כדי לסנכרן את הפוקוס שלך</p>
+    <button class="login" onclick="loginWithGoogle()">
+        🔵 התחבר עם Google
+    </button>
 </div>
 
+<!-- אזור האפליקציה (יוסתר עד ההתחברות) -->
+<div id="app-section" class="card">
+    <h3>מצב פוקוס</h3>
+    <div id="status">כבוי</div>
 
-<select id="time">
+    <select id="time">
+        <option value="30">30 דקות</option>
+        <option value="60">שעה</option>
+        <option value="120">שעתיים</option>
+    </select>
 
-<option value="30">
-30 דקות
-</option>
+    <div id="timer">00:00</div>
 
-<option value="60">
-שעה
-</option>
-
-<option value="120">
-שעתיים
-</option>
-
-<option value="180">
-3 שעות
-</option>
-
-</select>
-
-
-<input
-id="customTime"
-type="number"
-placeholder="זמן מותאם בדקות"
->
-
-
-
-<div id="timer">
-00:00
+    <button class="start" onclick="startFocus()">🟢 הפעל פוקוס</button>
+    <button class="stop" onclick="stopFocus()">🔴 כבה פוקוס</button>
+    
+    <button class="logout" onclick="logoutUser()">🚪 התנתק</button>
 </div>
-
-
-<button class="start" onclick="startFocus()">
-🟢 הפעל
-</button>
-
-
-<button class="start" onclick="startCustomFocus()">
-⏱️ זמן מותאם
-</button>
-
-
-<button class="stop" onclick="stopFocus()">
-🔴 כבה
-</button>
-
-
-<hr>
-
-
-<h3>🚫 אתרים חסומים</h3>
-
-
-<input
-id="siteInput"
-placeholder="youtube.com"
->
-
-
-<button onclick="addSite()">
-➕ הוסף אתר
-</button>
-
-
-<div id="sitesList">
-טוען...
-</div>
-
-
-
-</div>
-
 
 <script type="module" src="app.js"></script>
 
-
 </body>
-
 </html>
