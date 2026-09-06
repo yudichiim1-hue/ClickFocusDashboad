@@ -1,22 +1,73 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
+
 <head>
 <meta charset="UTF-8">
-<title>ClickFocus Dashboard</title>
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ClickFocus</title>
+
+<style>
+body {
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+}
+
+.card {
+    background:#222;
+    padding:30px;
+    margin:50px auto;
+    border-radius:20px;
+    width:300px;
+}
+
+button, select {
+    width:90%;
+    padding:15px;
+    margin:10px;
+    border-radius:10px;
+    border:0;
+    font-size:16px;
+}
+
+button {
+    cursor:pointer;
+}
+
+#status {
+    font-size:22px;
+}
+
+#timer {
+    font-size:20px;
+    color:#00ff88;
+}
+</style>
+
 </head>
+
 
 <body>
 
+
 <h1>🎯 ClickFocus</h1>
+
 
 <div class="card">
 
+
 <h2>מצב פוקוס</h2>
+
 
 <p id="status">
 טוען...
 </p>
+
+
+<p id="timer"></p>
+
 
 
 <button onclick="startFocus()">
@@ -24,15 +75,21 @@
 </button>
 
 
+
 <button onclick="stopFocus()">
 🔴 כבה פוקוס
 </button>
 
 
+
 <hr>
 
 
-<h3>⏱️ בחירת זמן</h3>
+
+<h3>
+⏱️ זמן פוקוס
+</h3>
+
 
 
 <select id="focusTime">
@@ -41,19 +98,24 @@
 30 דקות
 </option>
 
+
 <option value="60" selected>
 שעה
 </option>
+
 
 <option value="120">
 שעתיים
 </option>
 
+
 <option value="180">
 3 שעות
 </option>
 
+
 </select>
+
 
 
 <button id="startTimer">
@@ -61,10 +123,14 @@
 </button>
 
 
+
 </div>
+
 
 
 <script type="module" src="app.js"></script>
 
+
 </body>
+
 </html>
