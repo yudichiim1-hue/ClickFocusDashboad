@@ -1,6 +1,7 @@
 import { initializeApp } from 
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
+
 import {
 getFirestore,
 doc,
@@ -11,25 +12,40 @@ from
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
+
 const firebaseConfig = {
+
 apiKey:"AIzaSyBF87jtpyOS6exnNMH3PPc0XND8df2I7TU",
+
 authDomain:"clickfocusmaster.firebaseapp.com",
+
 projectId:"clickfocusmaster",
+
 storageBucket:"clickfocusmaster.firebasestorage.app",
+
 messagingSenderId:"891874911950",
+
 appId:"1:891874911950:web:43ac8e66561f6a8e70d29f"
+
 };
 
 
-const app = initializeApp(firebaseConfig);
 
-const db = getFirestore(app);
+const app =
+initializeApp(firebaseConfig);
 
 
-const focusRef = doc(db,"users","test-user");
+const db =
+getFirestore(app);
+
+
+const focusRef =
+doc(db,"users","test-user");
+
 
 
 let timerInterval = null;
+
 
 
 
@@ -43,7 +59,8 @@ clearInterval(timerInterval);
 function update(){
 
 
-const diff = endTime - Date.now();
+const diff =
+endTime - Date.now();
 
 
 
@@ -53,16 +70,23 @@ if(diff <= 0){
 clearInterval(timerInterval);
 
 
-document.getElementById("timer").innerHTML="00:00";
 
-document.getElementById("status").innerHTML="נגמר";
+document.getElementById("timer").innerHTML =
+"00:00";
 
+
+document.getElementById("status").innerHTML =
+"נגמר";
 
 
 setDoc(focusRef,{
+
 active:false
+
 },{
+
 merge:true
+
 });
 
 
@@ -106,18 +130,12 @@ timerInterval =
 setInterval(update,1000);
 
 
-
 }
 
 
 
 
-window.startFocus = async ()=>{
-
-
-const minutes =
-Number(document.getElementById("time").value);
-
+async function activateFocus(minutes){
 
 
 const start =
@@ -140,7 +158,9 @@ startedAt:start,
 endTime:end
 
 
-},{merge:true});
+},{
+merge:true
+});
 
 
 
@@ -150,6 +170,51 @@ document.getElementById("status").innerHTML =
 
 startTimer(end);
 
+
+}
+
+
+
+
+window.startFocus = ()=>{
+
+
+const minutes =
+Number(
+document.getElementById("time").value
+);
+
+
+activateFocus(minutes);
+
+
+};
+
+
+
+
+
+window.startCustomFocus = ()=>{
+
+
+const minutes =
+Number(
+document.getElementById("customTime").value
+);
+
+
+
+if(!minutes || minutes <= 0){
+
+alert("הכנס מספר דקות תקין");
+
+return;
+
+}
+
+
+
+activateFocus(minutes);
 
 
 };
@@ -176,8 +241,11 @@ startedAt:0,
 
 endTime:0
 
+},{
 
-},{merge:true});
+merge:true
+
+});
 
 
 
@@ -196,20 +264,24 @@ document.getElementById("timer").innerHTML =
 
 
 
-// סנכרון בזמן אמת
 
 onSnapshot(focusRef,(snap)=>{
 
 
-if(!snap.exists()) return;
+if(!snap.exists())
+return;
 
 
 
-const data = snap.data();
+const data =
+snap.data();
 
 
 
-if(data.active && data.endTime > Date.now()){
+if(
+data.active &&
+data.endTime > Date.now()
+){
 
 
 document.getElementById("status").innerHTML =
@@ -217,7 +289,6 @@ document.getElementById("status").innerHTML =
 
 
 startTimer(data.endTime);
-
 
 
 }
@@ -230,7 +301,6 @@ document.getElementById("status").innerHTML =
 
 
 }
-
 
 
 });
