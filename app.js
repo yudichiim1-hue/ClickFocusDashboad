@@ -1,20 +1,21 @@
 import { initializeApp } from 
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
-import { 
+import {
 getFirestore,
 doc,
 setDoc,
 getDoc
-} from 
+}
+from
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
 const firebaseConfig = {
-apiKey: "AIzaSyBF87jtpyOS6exnNMH3PPc0XND8df2I7TU",
-authDomain: "clickfocusmaster.firebaseapp.com",
-projectId: "clickfocusmaster",
-storageBucket: "clickfocusmaster.firebasestorage.app",
+apiKey:"AIzaSyBF87jtpyOS6exnNMH3PPc0XND8df2I7TU",
+authDomain:"clickfocusmaster.firebaseapp.com",
+projectId:"clickfocusmaster",
+storageBucket:"clickfocusmaster.firebasestorage.app",
 messagingSenderId:"891874911950",
 appId:"1:891874911950:web:43ac8e66561f6a8e70d29f"
 };
@@ -23,121 +24,106 @@ appId:"1:891874911950:web:43ac8e66561f6a8e70d29f"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-
 const focusRef = doc(db,"users","test-user");
 
+let timerInterval = null;
 
-let timerInterval;
 
-
-function updateTimer(endTime){
+function showTime(end){
 
 clearInterval(timerInterval);
 
-timerInterval=setInterval(async()=>{
+function tick(){
 
-let now=Date.now();
-
-let diff=endTime-now;
-
+let diff=end-Date.now();
 
 if(diff<=0){
 
-clearInterval(timerInterval);
-
 document.getElementById("timer").innerHTML="00:00";
-
 document.getElementById("status").innerHTML="נגמר";
 
-await setDoc(focusRef,{
+clearInterval(timerInterval);
+
+setDoc(focusRef,{
 active:false,
 remainingTime:0,
 endTime:0
 },{merge:true});
 
 return;
+}
+
+
+let min=Math.floor(diff/60000);
+let sec=Math.floor((diff%60000)/1000);
+
+document.getElementById("timer").innerHTML =
+String(min).padStart(2,"0")+":"+
+String(sec).padStart(2,"0");
 
 }
 
 
-let minutes=Math.floor(diff/60000);
-let seconds=Math.floor((diff%60000)/1000);
+tick();
 
-
-document.getElementById("timer").innerHTML=
-`${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
-
-
-},1000);
+timerInterval=setInterval(tick,1000);
 
 }
 
 
 
-window.startFocus=async()=>{
+window.startFocus = async ()=>{
 
 
-let minutes=
+let minutes =
 Number(document.getElementById("time").value);
 
 
-let endTime=
-Date.now()+minutes*60*1000;
-
-
-await setDoc(focusRef,{
-
-active:true,
-
-duration:minutes,
-
-startedAt:Date.now(),
-
-endTime:endTime,
-
-remainingTime:minutes*60
-
-},{merge:true});
+let end =
+Date.now()+minutes*60000;
 
 
 document.getElementById("status").innerHTML="פעיל 🟢";
 
 
-updateTimer(endTime);
+showTime(end);
+
+
+await setDoc(focusRef,{
+active:true,
+duration:minutes,
+startedAt:Date.now(),
+endTime:end,
+remainingTime:minutes*60
+},{merge:true});
 
 
 };
 
 
 
-window.stopFocus=async()=>{
+window.stopFocus = async ()=>{
 
 
 clearInterval(timerInterval);
 
 
-await setDoc(focusRef,{
-
-active:false,
-
-remainingTime:0,
-
-endTime:0
-
-},{merge:true});
-
-
 document.getElementById("status").innerHTML="כבוי";
 
-
 document.getElementById("timer").innerHTML="00:00";
+
+
+await setDoc(focusRef,{
+active:false,
+remainingTime:0,
+endTime:0
+},{merge:true});
 
 
 };
 
 
 
-// טעינה מחדש
 async function load(){
 
 let snap=await getDoc(focusRef);
@@ -152,7 +138,7 @@ if(data.active && data.endTime){
 
 document.getElementById("status").innerHTML="פעיל 🟢";
 
-updateTimer(data.endTime);
+showTime(data.endTime);
 
 }
 
