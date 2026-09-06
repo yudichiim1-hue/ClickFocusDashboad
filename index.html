@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>ClickFocus</title>
 
 <style>
+
 body {
     background:#111;
     color:white;
@@ -13,71 +16,132 @@ body {
     text-align:center;
 }
 
+
 .card {
     background:#222;
     padding:25px;
     margin:50px auto;
     border-radius:20px;
-    width:300px;
+    width:320px;
 }
 
-button, select {
+
+button, select, input {
+
     width:90%;
     padding:15px;
     margin:10px;
     border-radius:10px;
     border:0;
     font-size:18px;
+
 }
+
 
 .start {
     background:#4caf50;
 }
+
 
 .stop {
     background:#f44336;
     color:white;
 }
 
+
 #timer {
+
     font-size:35px;
     margin:20px;
+
 }
+
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <h2>🎯 ClickFocus</h2>
+
 
 <div class="card">
 
+
 <h3>מצב פוקוס</h3>
 
-<div id="status">כבוי</div>
+
+<div id="status">
+כבוי
+</div>
+
 
 <select id="time">
-<option value="30">30 דקות</option>
-<option value="60">שעה</option>
-<option value="120">שעתיים</option>
+
+<option value="30">
+30 דקות
+</option>
+
+<option value="60">
+שעה
+</option>
+
+<option value="120">
+שעתיים
+</option>
+
+<option value="180">
+3 שעות
+</option>
+
 </select>
+
+
+
+<p>
+או זמן מותאם אישית:
+</p>
+
+
+<input 
+id="customTime"
+type="number"
+placeholder="מספר דקות"
+min="1"
+>
+
 
 <div id="timer">
 00:00
 </div>
 
+
+
 <button class="start" onclick="startFocus()">
 🟢 הפעל פוקוס
 </button>
 
+
+<button class="start" onclick="startCustomFocus()">
+⏱️ הפעל זמן מותאם
+</button>
+
+
 <button class="stop" onclick="stopFocus()">
 🔴 כבה פוקוס
 </button>
+
+
 
 </div>
 
 
 <script type="module" src="app.js"></script>
 
+
 </body>
+
 </html>
