@@ -1,34 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>ClickFocus Dashboard</title>
-<link rel="stylesheet" href="style.css">
-</head>
+<div class="timer-box">
+  <h3>⏱️ זמן פוקוס</h3>
 
-<body>
+  <select id="focusTime">
+    <option value="30">30 דקות</option>
+    <option value="60" selected>שעה</option>
+    <option value="120">שעתיים</option>
+    <option value="180">3 שעות</option>
+  </select>
 
-<h1>🎯 ClickFocus</h1>
-
-<div class="card">
-
-<h2>מצב פוקוס</h2>
-
-<p id="status">
-טוען...
-</p>
-
-<button onclick="startFocus()">
-🟢 הפעל פוקוס
-</button>
-
-<button onclick="stopFocus()">
-🔴 כבה פוקוס
-</button>
-
+  <button id="startTimer">
+    🚀 הפעל פוקוס לזמן נבחר
+  </button>
 </div>
-
-
-<script type="module" src="app.js"></script>
-
-</body>
-</html>
