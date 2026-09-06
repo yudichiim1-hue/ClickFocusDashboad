@@ -22,6 +22,7 @@ appId:"1:891874911950:web:43ac8e66561f6a8e70d29f"
 
 
 const app = initializeApp(firebaseConfig);
+
 const db = getFirestore(app);
 
 
@@ -39,10 +40,10 @@ clearInterval(timerInterval);
 
 
 
-timerInterval = setInterval(async()=>{
+function update(){
 
 
-let diff = endTime - Date.now();
+const diff = endTime - Date.now();
 
 
 
@@ -58,16 +59,11 @@ document.getElementById("status").innerHTML="נגמר";
 
 
 
-await setDoc(focusRef,{
-
-active:false,
-
-remainingTime:0,
-
-endTime:0
-
-},{merge:true});
-
+setDoc(focusRef,{
+active:false
+},{
+merge:true
+});
 
 
 return;
@@ -76,19 +72,22 @@ return;
 
 
 
-let secondsLeft = Math.floor(diff / 1000);
+const totalSeconds =
+Math.floor(diff / 1000);
 
 
-let minutes =
-Math.floor(secondsLeft / 60);
+
+const minutes =
+Math.floor(totalSeconds / 60);
 
 
-let seconds =
-secondsLeft % 60;
+const seconds =
+totalSeconds % 60;
 
 
 
 document.getElementById("timer").innerHTML =
+
 String(minutes).padStart(2,"0")
 +
 ":"
@@ -96,18 +95,15 @@ String(minutes).padStart(2,"0")
 String(seconds).padStart(2,"0");
 
 
-
-// עדכון הזמן שנשאר ב-Firebase
-
-await setDoc(focusRef,{
-
-remainingTime:secondsLeft
-
-},{merge:true});
+}
 
 
 
-},1000);
+update();
+
+
+timerInterval =
+setInterval(update,1000);
 
 
 
@@ -116,20 +112,19 @@ remainingTime:secondsLeft
 
 
 
-
 window.startFocus = async ()=>{
 
 
-let minutes =
+const minutes =
 Number(document.getElementById("time").value);
 
 
 
-let start =
+const start =
 Date.now();
 
 
-let end =
+const end =
 start + minutes * 60 * 1000;
 
 
@@ -142,9 +137,8 @@ duration:minutes,
 
 startedAt:start,
 
-endTime:end,
+endTime:end
 
-remainingTime:minutes*60
 
 },{merge:true});
 
@@ -152,7 +146,6 @@ remainingTime:minutes*60
 
 document.getElementById("status").innerHTML =
 "פעיל 🟢";
-
 
 
 startTimer(end);
@@ -181,9 +174,8 @@ duration:0,
 
 startedAt:0,
 
-endTime:0,
+endTime:0
 
-remainingTime:0
 
 },{merge:true});
 
@@ -197,7 +189,6 @@ document.getElementById("timer").innerHTML =
 "00:00";
 
 
-
 };
 
 
@@ -205,8 +196,7 @@ document.getElementById("timer").innerHTML =
 
 
 
-
-// סנכרון חי
+// סנכרון בזמן אמת
 
 onSnapshot(focusRef,(snap)=>{
 
@@ -215,7 +205,7 @@ if(!snap.exists()) return;
 
 
 
-let data = snap.data();
+const data = snap.data();
 
 
 
