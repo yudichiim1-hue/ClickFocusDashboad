@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClickFocus</title><link rel="stylesheet" href="style.css">
+</head><body>
+<main class="card"><h1>🎯 ClickFocus</h1><p class="subtitle">זמן להתמקד. פחות הסחות דעת.</p>
+<section class="panel"><h2>מצב פוקוס</h2><div id="status" class="status">כבוי</div><div id="timer">00:00:00</div><div class="progress"><div id="progressBar"></div></div>
+<select id="time"><option value="25">25 דקות</option><option value="30">30 דקות</option><option value="60">שעה</option><option value="120">שעתיים</option></select>
+<div class="custom"><input id="customTime" type="number" min="1" max="1440" placeholder="זמן מותאם אישית בדקות"><button id="useCustom">השתמש בזמן</button></div>
+<div class="actions"><button class="start" onclick="startFocus()">🟢 הפעל פוקוס</button><button class="stop" onclick="stopFocus()">🔴 כבה פוקוס</button></div>
+<p id="message"></p></section></main><script type="module" src="app.js"></script></body></html>
