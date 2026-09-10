@@ -30,12 +30,13 @@ import {
 // --------------------------------------------------
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD8Gm8qM9vV7Y7Z9q9uY8u9uY8u9uY8uY",
+  apiKey: "AIzaSyBF87jtpyOS6exnNMH3PPc0XND8df2I7TU",
   authDomain: "clickfocusmaster.firebaseapp.com",
   projectId: "clickfocusmaster",
   storageBucket: "clickfocusmaster.firebasestorage.app",
-  messagingSenderId: "102938475610",
-  appId: "1:102938475610:web:1234567890abcdef123456"
+  messagingSenderId: "891874911950",
+  appId: "1:891874911950:web:43ac8e66561f6a8e70d29f",
+  measurementId: "G-8160YT0X39"
 };
 
 
@@ -170,7 +171,7 @@ googleLoginButton.addEventListener("click", async () => {
   }
 });
 
-// טיפול בחזרה מפתרון ה-Redirect של Google
+// טיפול בחזרה מ-Google
 getRedirectResult(auth)
   .then((result) => {
     if (result && result.user) {
