@@ -1,808 +1,753 @@
-// ===============================
-// ClickFocus Ultimate
-// Part 1 - Firebase + Auth
-// ===============================
-
-import { initializeApp } 
-from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged
-}
-from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
 import {
   getFirestore,
   doc,
   setDoc,
-  getDoc,
-  updateDoc,
+  onSnapshot,
   collection,
   addDoc,
-  getDocs,
   deleteDoc,
-  onSnapshot
-}
-from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+  serverTimestamp,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
-// ===============================
-// Firebase Config שלך
-// ===============================
+// --------------------------------------------------
+// Firebase configuration
+// --------------------------------------------------
 
 const firebaseConfig = {
-
-  apiKey: "AIzaSyBF87jtpyOS6exnNMH3PPc0XND8df2I7TU",
-
+  apiKey: "AIzaSyD8Gm8qM9vV7Y7Z9q9uY8u9uY8u9uY8uY",
   authDomain: "clickfocusmaster.firebaseapp.com",
-
   projectId: "clickfocusmaster",
-
   storageBucket: "clickfocusmaster.firebasestorage.app",
-
-  messagingSenderId: "891874911950",
-
-  appId: "1:891874911950:web:43ac8e66561f6a8e70d29f",
-
-  measurementId: "G-8160YT0X39"
-
+  messagingSenderId: "102938475610",
+  appId: "1:102938475610:web:1234567890abcdef123456"
 };
 
 
-// הפעלה
+// --------------------------------------------------
+// Firebase initialization
+// --------------------------------------------------
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
-
 const db = getFirestore(app);
-
 const googleProvider = new GoogleAuthProvider();
 
 
-// משתנים כלליים
+// --------------------------------------------------
+// DOM elements
+// --------------------------------------------------
+
+const loginSection = document.getElementById("loginSection");
+const appSection = document.getElementById("appSection");
+
+const googleLoginButton = document.getElementById("googleLoginButton");
+const logoutButton = document.getElementById("logoutButton");
+
+const loginStatus = document.getElementById("loginStatus");
+const timerStatus = document.getElementById("timerStatus");
+const sitesStatus = document.getElementById("sitesStatus");
+
+const userPhoto = document.getElementById("userPhoto");
+const userName = document.getElementById("userName");
+const userEmail = document.getElementById("userEmail");
+
+const timerDisplay = document.getElementById("timerDisplay");
+const durationSelect = document.getElementById("durationSelect");
+const customTimeContainer = document.getElementById("customTimeContainer");
+const customDurationInput = document.getElementById("customDurationInput");
+
+const startButton = document.getElementById("startButton");
+const stopButton = document.getElementById("stopButton");
+
+const siteForm = document.getElementById("siteForm");
+const siteInput = document.getElementById("siteInput");
+const sitesList = document.getElementById("sitesList");
+
+
+// --------------------------------------------------
+// Application state
+// --------------------------------------------------
 
 let currentUser = null;
+let currentTimerData = null;
 
 let timerInterval = null;
-
-let endTime = 0;
-
-
-// ===============================
-// התחברות Google
-// ===============================
-
-const loginButton =
-document.getElementById("googleLoginButton");
+let unsubscribeTimer = null;
+let unsubscribeSites = null;
 
 
-if(loginButton){
+// --------------------------------------------------
+// Utility functions
+// --------------------------------------------------
 
-loginButton.onclick = async()=>{
-
-try{
-
-const result =
-await signInWithPopup(
-auth,
-googleProvider
-);
-
-
-currentUser = result.user;
-
-
-// יצירת משתמש אם לא קיים
-
-await setDoc(
-
-doc(db,"users",currentUser.uid),
-
-{
-
-email: currentUser.email,
-
-name: currentUser.displayName || "",
-
-photo: currentUser.photoURL || "",
-
-created:
-Date.now()
-
-},
-
-{
-
-merge:true
-
+function setStatus(element, message, type = "") {
+  element.textContent = message;
+  element.className = `status ${type}`;
 }
 
-);
+function formatTime(totalSeconds) {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
 
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
 
-console.log(
-"Login OK:",
-currentUser.uid
-);
-
-
+  return [
+    String(hours).padStart(2, "0"),
+    String(minutes).padStart(2, "0"),
+    String(seconds).padStart(2, "0")
+  ].join(":");
 }
 
-catch(error){
+function normalizeWebsite(value) {
+  let website = value.trim().toLowerCase();
 
+  if (!website) {
+    return "";
+  }
 
-console.error(
-"Google Login Error:",
-error
-);
+  website = website.replace(/^https?:\/\//, "");
+  website = website.replace(/^www\./, "");
+  website = website.split("/")[0];
+  website = website.split("?")[0];
+  website = website.split("#")[0];
 
+  return website;
+}
 
-alert(
-error.code + "\n" +
-error.message
-);
+function getUserDocument() {
+  if (!currentUser) {
+    throw new Error("לא נמצא משתמש מחובר.");
+  }
 
+  return doc(db, "users", currentUser.uid);
+}
 
+function getSitesCollection() {
+  if (!currentUser) {
+    throw new Error("לא נמצא משתמש מחובר.");
+  }
+
+  return collection(db, "users", currentUser.uid, "blockedSites");
 }
 
 
-};
+// --------------------------------------------------
+// Google login (Redirect Method)
+// --------------------------------------------------
 
-}
+googleLoginButton.addEventListener("click", async () => {
+  try {
+    googleLoginButton.disabled = true;
+    setStatus(loginStatus, "מעביר להתחברות עם Google...", "");
 
+    await signInWithRedirect(auth, googleProvider);
+  } catch (error) {
+    console.error("Login error:", error);
 
+    setStatus(
+      loginStatus,
+      "אירעה שגיאה בהתחברות. נסה שוב.",
+      "error"
+    );
+    googleLoginButton.disabled = false;
+  }
+});
 
-// ===============================
-// יציאה
-// ===============================
-
-const logoutButton =
-document.getElementById("logoutButton");
-
-
-if(logoutButton){
-
-logoutButton.onclick = async()=>{
-
-await signOut(auth);
-
-currentUser=null;
-
-location.reload();
-
-};
-
-}
-
-
-
-// ===============================
-// בדיקת משתמש מחובר
-// ===============================
-
-
-onAuthStateChanged(auth,(user)=>{
+// טיפול בחזרה מפתרון ה-Redirect של Google
+getRedirectResult(auth)
+  .then((result) => {
+    if (result && result.user) {
+      setStatus(loginStatus, "ההתחברות הצליחה.", "success");
+    }
+  })
+  .catch((error) => {
+    console.error("Redirect login result error:", error);
+    setStatus(loginStatus, "אירעה שגיאה בחזרה מההתחברות.", "error");
+  });
 
 
-if(user){
+// --------------------------------------------------
+// Logout
+// --------------------------------------------------
 
-currentUser=user;
+logoutButton.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("Logout error:", error);
 
-
-console.log(
-"Current UID:",
-user.uid
-);
-
-
-// מתחילים טעינת נתונים
-
-loadUserData();
-
-
-}
-
-else{
-
-
-console.log(
-"No user"
-);
-
-
-}
-
-
+    setStatus(
+      timerStatus,
+      "אירעה שגיאה בהתנתקות.",
+      "error"
+    );
+  }
 });
 
 
+// --------------------------------------------------
+// Authentication state
+// --------------------------------------------------
 
-// ===============================
-// Reference אישי למשתמש
-// ===============================
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
 
-function userRef(){
+  if (user) {
+    showLoggedInState(user);
+    subscribeToTimer();
+    subscribeToBlockedSites();
+  } else {
+    showLoggedOutState();
+    clearTimerSubscription();
+    clearSitesSubscription();
+  }
+});
 
-return doc(
-db,
-"users",
-currentUser.uid
-);
+function showLoggedInState(user) {
+  loginSection.classList.add("hidden");
+  appSection.classList.remove("hidden");
 
-}
-// ===============================
-// Part 2 - Focus Timer
-// ===============================
+  userName.textContent = user.displayName || "משתמש";
+  userEmail.textContent = user.email || "";
 
+  if (user.photoURL) {
+    userPhoto.src = user.photoURL;
+    userPhoto.classList.remove("hidden");
+  } else {
+    userPhoto.classList.add("hidden");
+  }
 
-// טעינת נתוני משתמש
-async function loadUserData(){
-
-if(!currentUser) return;
-
-
-const snapshot =
-await getDoc(userRef());
-
-
-if(snapshot.exists()){
-
-
-const data = snapshot.data();
-
-
-if(data.endTime && data.active){
-
-
-endTime = data.endTime;
-
-
-startTimerDisplay();
-
-
+  setStatus(loginStatus, "");
 }
 
+function showLoggedOutState() {
+  loginSection.classList.remove("hidden");
+  appSection.classList.add("hidden");
 
-}
+  userName.textContent = "";
+  userEmail.textContent = "";
 
+  stopLocalTimer();
+  resetTimerDisplay();
 
+  currentTimerData = null;
+  sitesList.innerHTML = "";
 }
 
 
+// --------------------------------------------------
+// Timer: Firestore subscription
+// --------------------------------------------------
 
-// ===============================
-// התחלת פוקוס
-// ===============================
+function subscribeToTimer() {
+  clearTimerSubscription();
 
+  const timerDocument = getUserDocument();
 
-const startButton =
-document.getElementById("startButton");
+  unsubscribeTimer = onSnapshot(
+    timerDocument,
+    (snapshot) => {
+      if (snapshot.exists()) {
+        currentTimerData = snapshot.data();
+        updateTimerFromFirestore();
+      } else {
+        currentTimerData = {
+          active: false,
+          duration: 0,
+          startedAt: 0,
+          endTime: 0
+        };
 
+        resetTimerDisplay();
+      }
+    },
+    (error) => {
+      console.error("Timer subscription error:", error);
 
-if(startButton){
+      setStatus(
+        timerStatus,
+        "לא ניתן לטעון את נתוני הטיימר.",
+        "error"
+      );
+    }
+  );
+}
 
+function clearTimerSubscription() {
+  if (unsubscribeTimer) {
+    unsubscribeTimer();
+    unsubscribeTimer = null;
+  }
+}
 
-startButton.onclick = async()=>{
+function updateTimerFromFirestore() {
+  if (!currentTimerData) {
+    resetTimerDisplay();
+    return;
+  }
 
+  if (
+    currentTimerData.active === true &&
+    Number(currentTimerData.endTime) > Date.now()
+  ) {
+    startLocalTimer();
+  } else {
+    stopLocalTimer();
 
-if(!currentUser){
-
-alert("יש להתחבר קודם");
-
-return;
-
+    if (currentTimerData.active === true) {
+      finishTimerInFirestore();
+    } else {
+      resetTimerDisplay();
+    }
+  }
 }
 
 
-// זמן מותאם אישית
+// --------------------------------------------------
+// Timer: local display
+// --------------------------------------------------
 
-const customInput =
-document.getElementById("customMinutes");
+function startLocalTimer() {
+  stopLocalTimer();
 
-const selectTime =
-document.getElementById("focusTime");
+  timerDisplay.classList.add("active");
+  timerDisplay.classList.remove("finished");
 
+  updateTimerDisplay();
 
-let minutes = 0;
-
-
-// אם יש זמן מותאם
-if(
-customInput &&
-Number(customInput.value)>0
-){
-
-minutes =
-Number(customInput.value);
-
-
+  timerInterval = setInterval(() => {
+    updateTimerDisplay();
+  }, 1000);
 }
 
-// אחרת מהבחירה
-
-else if(selectTime){
-
-
-minutes =
-Number(selectTime.value);
-
-
+function stopLocalTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
 }
 
+function updateTimerDisplay() {
+  if (
+    !currentTimerData ||
+    currentTimerData.active !== true ||
+    !currentTimerData.endTime
+  ) {
+    resetTimerDisplay();
+    return;
+  }
 
-// ברירת מחדל
+  const remainingMilliseconds =
+    Number(currentTimerData.endTime) - Date.now();
 
-if(!minutes){
+  const remainingSeconds =
+    Math.max(0, Math.ceil(remainingMilliseconds / 1000));
 
-minutes = 25;
+  timerDisplay.textContent = formatTime(remainingSeconds);
 
+  if (remainingSeconds <= 0) {
+    stopLocalTimer();
+    timerDisplay.classList.remove("active");
+    timerDisplay.classList.add("finished");
+
+    setStatus(
+      timerStatus,
+      "הטיימר הסתיים.",
+      "success"
+    );
+
+    finishTimerInFirestore();
+  }
 }
 
+function resetTimerDisplay() {
+  stopLocalTimer();
 
-// חישוב זמן סיום
-
-endTime =
-Date.now() + minutes * 60 * 1000;
-
-
-
-await setDoc(
-
-userRef(),
-
-{
-
-active:true,
-
-duration:minutes,
-
-startTime:Date.now(),
-
-endTime:endTime
-
-},
-
-{
-
-merge:true
-
+  timerDisplay.textContent = "00:00:00";
+  timerDisplay.classList.remove("active");
+  timerDisplay.classList.remove("finished");
 }
 
-);
+async function finishTimerInFirestore() {
+  if (!currentUser) {
+    return;
+  }
 
-
-
-startTimerDisplay();
-
-
-};
-
-
-}
-
-
-
-
-// ===============================
-// עצירת טיימר
-// ===============================
-
-
-const stopButton =
-document.getElementById("stopButton");
-
-
-if(stopButton){
-
-
-stopButton.onclick = async()=>{
-
-
-if(!currentUser) return;
-
-
-
-clearInterval(timerInterval);
-
-
-
-await updateDoc(
-
-userRef(),
-
-{
-
-active:false,
-
-endTime:0,
-
-duration:0
-
-}
-
-);
-
-
-
-showTime(0);
-
-
-
-};
-
-
+  try {
+    await setDoc(
+      getUserDocument(),
+      {
+        active: false,
+        duration: 0,
+        startedAt: 0,
+        endTime: 0
+      },
+      {
+        merge: true
+      }
+    );
+  } catch (error) {
+    console.error("Finish timer error:", error);
+  }
 }
 
 
+// --------------------------------------------------
+// Timer: duration selection
+// --------------------------------------------------
 
+durationSelect.addEventListener("change", () => {
+  if (durationSelect.value === "custom") {
+    customTimeContainer.classList.remove("hidden");
+    customDurationInput.focus();
+  } else {
+    customTimeContainer.classList.add("hidden");
+  }
+});
 
-// ===============================
-// הצגת הטיימר
-// ===============================
+function getSelectedDurationInMinutes() {
+  if (durationSelect.value === "custom") {
+    const customMinutes = Number(customDurationInput.value);
 
+    if (
+      !Number.isInteger(customMinutes) ||
+      customMinutes < 1 ||
+      customMinutes > 1440
+    ) {
+      throw new Error(
+        "יש להזין זמן מותאם אישית בין דקה אחת ל־1440 דקות."
+      );
+    }
 
-function startTimerDisplay(){
+    return customMinutes;
+  }
 
+  const selectedMinutes = Number(durationSelect.value);
 
-clearInterval(timerInterval);
+  if (
+    !Number.isInteger(selectedMinutes) ||
+    selectedMinutes <= 0
+  ) {
+    throw new Error("בחירת הזמן אינה תקינה.");
+  }
 
-
-
-timerInterval =
-setInterval(()=>{
-
-
-let remaining =
-endTime - Date.now();
-
-
-
-if(remaining <= 0){
-
-
-
-clearInterval(timerInterval);
-
-
-
-showTime(0);
-
-
-
-finishFocus();
-
-
-
-return;
-
-
+  return selectedMinutes;
 }
 
 
-
-showTime(remaining);
-
-
-
-},1000);
-
-
-
-}
-
-
-
-
-
-function showTime(milliseconds){
-
-
-
-const timer =
-document.getElementById("timer");
-
-if(!timer) return;
-
-
-
-let totalSeconds =
-Math.floor(milliseconds / 1000);
-
-
-
-let hours =
-Math.floor(totalSeconds / 3600);
-
-
-
-let minutes =
-Math.floor(
-(totalSeconds % 3600) / 60
-);
-
-
-
-let seconds =
-totalSeconds % 60;
-
-
-
-timer.innerText =
-
-String(hours).padStart(2,"0")
-+
-":"
-+
-String(minutes).padStart(2,"0")
-+
-":"
-+
-String(seconds).padStart(2,"0");
-
-
-
-}
-
-
-
-
-// ===============================
-// סיום פוקוס
-// ===============================
-
-
-async function finishFocus(){
-
-
-if(!currentUser) return;
-
-
-
-await updateDoc(
-
-userRef(),
-
-{
-
-active:false,
-
-endTime:0,
-
-lastCompleted:Date.now()
-
-}
-
-);
-
-
-
-alert(
-"🎯 סיימת זמן פוקוס!"
-);
-
-
-
-}
-// ===============================
-// Part 3 - Blocked Sites
-// ===============================
-
-
-// טעינת רשימת אתרים
-
-async function loadBlockedSites(){
-
-
-if(!currentUser) return;
-
-
-
-const list =
-document.getElementById("sitesList");
-
-
-if(!list) return;
-
-
-
-list.innerHTML = "";
-
-
-
-const sitesRef =
-collection(
-db,
-"users",
-currentUser.uid,
-"blockedSites"
-);
-
-
-
-onSnapshot(
-sitesRef,
-(snapshot)=>{
-
-
-list.innerHTML="";
-
-
-
-snapshot.forEach((item)=>{
-
-
-const data = item.data();
-
-
-
-const div =
-document.createElement("div");
-
-
-
-div.className="site-item";
-
-
-
-div.innerHTML = `
-
-<span>${data.domain}</span>
-
-<button data-id="${item.id}">
-❌ מחק
-</button>
-
-`;
-
-
-
-div.querySelector("button")
-.onclick = async()=>{
-
-
-await deleteDoc(
-
-doc(
-db,
-"users",
-currentUser.uid,
-"blockedSites",
-item.id
-)
-
-);
-
-
-};
-
-
-
-list.appendChild(div);
-
-
-
+// --------------------------------------------------
+// Timer: start
+// --------------------------------------------------
+
+startButton.addEventListener("click", async () => {
+  if (!currentUser) {
+    setStatus(
+      timerStatus,
+      "יש להתחבר לפני הפעלת הטיימר.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    const durationMinutes = getSelectedDurationInMinutes();
+
+    const now = Date.now();
+    const endTime = now + durationMinutes * 60 * 1000;
+
+    startButton.disabled = true;
+
+    await setDoc(
+      getUserDocument(),
+      {
+        active: true,
+        duration: durationMinutes,
+        startedAt: now,
+        endTime: endTime
+      },
+      {
+        merge: true
+      }
+    );
+
+    setStatus(
+      timerStatus,
+      `הטיימר הופעל למשך ${durationMinutes} דקות.`,
+      "success"
+    );
+  } catch (error) {
+    console.error("Start timer error:", error);
+
+    setStatus(
+      timerStatus,
+      error.message || "אירעה שגיאה בהפעלת הטיימר.",
+      "error"
+    );
+  } finally {
+    startButton.disabled = false;
+  }
 });
 
 
+// --------------------------------------------------
+// Timer: stop
+// --------------------------------------------------
 
+stopButton.addEventListener("click", async () => {
+  if (!currentUser) {
+    return;
+  }
+
+  try {
+    stopButton.disabled = true;
+
+    await setDoc(
+      getUserDocument(),
+      {
+        active: false,
+        duration: 0,
+        startedAt: 0,
+        endTime: 0
+      },
+      {
+        merge: true
+      }
+    );
+
+    setStatus(
+      timerStatus,
+      "הטיימר נעצר.",
+      "success"
+    );
+  } catch (error) {
+    console.error("Stop timer error:", error);
+
+    setStatus(
+      timerStatus,
+      "אירעה שגיאה בעצירת הטיימר.",
+      "error"
+    );
+  } finally {
+    stopButton.disabled = false;
+  }
+});
+
+
+// --------------------------------------------------
+// Blocked sites: Firestore subscription
+// --------------------------------------------------
+
+function subscribeToBlockedSites() {
+  clearSitesSubscription();
+
+  const sitesCollection = getSitesCollection();
+
+  const sitesQuery = query(
+    sitesCollection,
+    orderBy("createdAt", "desc")
+  );
+
+  unsubscribeSites = onSnapshot(
+    sitesQuery,
+    (snapshot) => {
+      const sites = [];
+
+      snapshot.forEach((siteDocument) => {
+        sites.push({
+          id: siteDocument.id,
+          ...siteDocument.data()
+        });
+      });
+
+      renderBlockedSites(sites);
+    },
+    (error) => {
+      console.error("Blocked sites subscription error:", error);
+
+      setStatus(
+        sitesStatus,
+        "לא ניתן לטעון את רשימת האתרים.",
+        "error"
+      );
+
+      sitesList.innerHTML = `
+        <div class="empty-state">
+          לא ניתן לטעון את הרשימה כרגע.
+        </div>
+      `;
+    }
+  );
 }
 
-);
-
-
-
-}
-
-
-
-
-
-// ===============================
-// הוספת אתר
-// ===============================
-
-
-const addSiteButton =
-document.getElementById("addSiteButton");
-
-
-
-if(addSiteButton){
-
-
-addSiteButton.onclick = async()=>{
-
-
-if(!currentUser){
-
-alert("יש להתחבר");
-
-return;
-
-}
-
-
-
-const input =
-document.getElementById("siteInput");
-
-
-
-let domain =
-input.value
-.trim()
-.toLowerCase();
-
-
-
-if(!domain){
-
-return;
-
-}
-
-
-
-// מנקה כתובת אם הדביקו URL
-
-domain =
-domain
-.replace("https://","")
-.replace("http://","")
-.replace("www.","")
-.split("/")[0];
-
-
-
-
-await addDoc(
-
-collection(
-db,
-"users",
-currentUser.uid,
-"blockedSites"
-),
-
-{
-
-domain:domain,
-
-created:Date.now()
-
-}
-
-);
-
-
-
-input.value="";
-
-
-
-};
-
-
-
+function clearSitesSubscription() {
+  if (unsubscribeSites) {
+    unsubscribeSites();
+    unsubscribeSites = null;
+  }
 }
 
 
+// --------------------------------------------------
+// Blocked sites: render
+// --------------------------------------------------
+
+function renderBlockedSites(sites) {
+  sitesList.innerHTML = "";
+
+  if (sites.length === 0) {
+    sitesList.innerHTML = `
+      <div class="empty-state">
+        עדיין לא הוספת אתרים לרשימת החסימה.
+      </div>
+    `;
+
+    return;
+  }
+
+  sites.forEach((site) => {
+    const item = document.createElement("div");
+    item.className = "site-item";
+
+    const name = document.createElement("div");
+    name.className = "site-name";
+    name.textContent = site.domain;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "site-delete-button";
+    deleteButton.textContent = "מחק";
+
+    deleteButton.addEventListener("click", () => {
+      deleteBlockedSite(site.id);
+    });
+
+    item.appendChild(name);
+    item.appendChild(deleteButton);
+
+    sitesList.appendChild(item);
+  });
+}
 
 
-// ===============================
-// הפעלת טעינת אתרים אחרי התחברות
-// ===============================
+// --------------------------------------------------
+// Blocked sites: add
+// --------------------------------------------------
+
+siteForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!currentUser) {
+    setStatus(
+      sitesStatus,
+      "יש להתחבר לפני הוספת אתר.",
+      "error"
+    );
+    return;
+  }
+
+  const domain = normalizeWebsite(siteInput.value);
+
+  if (!domain) {
+    setStatus(
+      sitesStatus,
+      "יש להזין כתובת אתר.",
+      "error"
+    );
+    return;
+  }
+
+  if (!domain.includes(".")) {
+    setStatus(
+      sitesStatus,
+      "יש להזין כתובת אתר תקינה, לדוגמה youtube.com.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    const addButton = siteForm.querySelector("button");
+
+    addButton.disabled = true;
+
+    await addDoc(
+      getSitesCollection(),
+      {
+        domain: domain,
+        createdAt: serverTimestamp()
+      }
+    );
+
+    siteInput.value = "";
+
+    setStatus(
+      sitesStatus,
+      "האתר נוסף לרשימת החסימה.",
+      "success"
+    );
+  } catch (error) {
+    console.error("Add blocked site error:", error);
+
+    setStatus(
+      sitesStatus,
+      "אירעה שגיאה בהוספת האתר.",
+      "error"
+    );
+  } finally {
+    const addButton = siteForm.querySelector("button");
+    addButton.disabled = false;
+  }
+});
 
 
-function startUserFeatures(){
+// --------------------------------------------------
+// Blocked sites: delete
+// --------------------------------------------------
 
+async function deleteBlockedSite(siteId) {
+  if (!currentUser || !siteId) {
+    return;
+  }
 
-loadBlockedSites();
+  try {
+    await deleteDoc(
+      doc(
+        db,
+        "users",
+        currentUser.uid,
+        "blockedSites",
+        siteId
+      )
+    );
 
+    setStatus(
+      sitesStatus,
+      "האתר נמחק מהרשימה.",
+      "success"
+    );
+  } catch (error) {
+    console.error("Delete blocked site error:", error);
 
+    setStatus(
+      sitesStatus,
+      "אירעה שגיאה במחיקת האתר.",
+      "error"
+    );
+  }
 }
