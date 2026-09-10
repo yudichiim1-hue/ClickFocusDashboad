@@ -98,6 +98,7 @@ let unsubscribeSites = null;
 // --------------------------------------------------
 
 function setStatus(element, message, type = "") {
+  if (!element) return;
   element.textContent = message;
   element.className = `status ${type}`;
 }
@@ -250,6 +251,7 @@ function showLoggedOutState() {
 
   currentTimerData = null;
   sitesList.innerHTML = "";
+  if (googleLoginButton) googleLoginButton.disabled = false;
 }
 
 
@@ -560,10 +562,13 @@ function subscribeToBlockedSites() {
 
   const sitesCollection = getSitesCollection();
 
-  const sitesQuery = query(
-    sitesCollection,
-    orderBy("createdAt", "desc")
-  );
+  // נפילת גיבוי במידה ואין אינדקס מוגדר ל-createdAt
+  let sitesQuery;
+  try {
+    sitesQuery = query(sitesCollection, orderBy("createdAt", "desc"));
+  } catch (e) {
+    sitesQuery = sitesCollection;
+  }
 
   unsubscribeSites = onSnapshot(
     sitesQuery,
@@ -582,17 +587,12 @@ function subscribeToBlockedSites() {
     (error) => {
       console.error("Blocked sites subscription error:", error);
 
-      setStatus(
-        sitesStatus,
-        "לא ניתן לטעון את רשימת האתרים.",
-        "error"
-      );
-
-      sitesList.innerHTML = `
-        <div class="empty-state">
-          לא ניתן לטעון את הרשימה כרגע.
-        </div>
-      `;
+      // ניסיון שליפה ללא orderBy אם הייתה שגיאת Index
+      onSnapshot(sitesCollection, (snapshot) => {
+        const sites = [];
+        snapshot.forEach((doc) => sites.push({ id: doc.id, ...doc.data() }));
+        renderBlockedSites(sites);
+      });
     }
   );
 }
@@ -712,7 +712,7 @@ siteForm.addEventListener("submit", async (event) => {
     );
   } finally {
     const addButton = siteForm.querySelector("button");
-    addButton.disabled = false;
+    if (addButton) addButton.disabled = false;
   }
 });
 
